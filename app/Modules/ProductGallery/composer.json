@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/productgallery",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\ProductGallery\\": "app/",
+            "Modules\\ProductGallery\\Database\\Factories\\": "database/factories/",
+            "Modules\\ProductGallery\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\ProductGallery\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "Bookings": true,
+    "Category": true,
+    "Products": true,
+    "ProductGallery": true
+}
