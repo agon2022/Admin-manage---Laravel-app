@@ -15,13 +15,15 @@ class UserController extends Controller
     {
         $search = $request->input('search');
 
-        $users = User::with('roles') // Lấy danh sách users kèm roles
+        $users = User::with('roles')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             })
-            ->orderBy('id', 'desc') // 🔥 User mới nhất lên đầu
-            ->paginate(7);
+            ->orderBy('id', 'desc')
+            ->paginate(5)
+            ->appends(request()->query()); // 👉 Giữ lại query string khi phân trang
+
 
         return view('admin.users.index', compact('users'));
     }

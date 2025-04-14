@@ -134,11 +134,11 @@ return [
     */
 
     'usermenu_enabled' => true,
-    'usermenu_header' => false,
+    'usermenu_header' => true,
     'usermenu_header_class' => 'bg-primary',
-    'usermenu_image' => false,
-    'usermenu_desc' => false,
-    'usermenu_profile_url' => false,
+    'usermenu_image' => true,
+    'usermenu_desc' => true,
+    'usermenu_profile_url' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -259,7 +259,6 @@ return [
     'use_route_url' => false,
     'dashboard_url' => 'home',
     'logout_url' => 'logout',
-    'logout_method' => 'POST',
     'login_url' => 'login',
     'register_url' => 'register',
     'password_reset_url' => 'password/reset',
@@ -300,36 +299,57 @@ return [
     */
 
     'menu' => [
+        // Navbar items:
         [
-            'text' => 'Dashboard',
-            'url'  => 'home',
-            'icon' => 'fas fa-tachometer-alt',
+            'type' => 'fullscreen-widget',
+            'topnav_right' => true,
+        ],
+
+        // Sidebar items:
+        [
+            'text' => 'blog',
+            'url' => 'admin/blog',
+            'can' => 'manage-blog',
         ],
         [
-            'text' => 'Quản lý người dùng',
-            'url'  => 'admin/users',
-            'icon' => 'fas fa-users',
+            'text' => 'Dashboard',
+            'url' => 'home',
+            'icon' => 'fas fa-tachometer-alt',
+            'label' => 4,
+            'label_color' => 'success',
+        ],
+        [
+            'text' => 'Tài khoản',
+            'icon' => 'fas fa-cogs',
+            'submenu' => [
+                [
+                    'text' => 'Người dùng',
+                    'url' => 'admin/users',
+                    'icon' => 'fas fa-users',
+                ],
+                [
+                    'text' => 'Phân quyền',
+                    'url' => 'admin/roles',
+                    'icon' => 'fa-solid fa-circle-user',
+                ],
+            ],
         ],
         [
             'text' => 'Quản lý danh mục',
-            'url'  => 'category',
-            'icon' => 'fas fa-list',
+            'url' => 'category',
+            'icon' => 'fas fa-folder',
         ],
         [
             'text' => 'Quản lý sản phẩm',
-            'url'  => 'products',
+            'url' => 'products',
             'icon' => 'fas fa-box',
         ],
         [
-            'text' => 'Đặt hàng',
-            'url'  => 'bookings',
+            'text' => 'Quản lý đặt hàng',
+            'url' => 'bookings',
             'icon' => 'fas fa-shopping-cart',
         ],
-        [
-            'text' => 'Profile',
-            'url'  => 'admin/profile',
-            'icon' => 'fas fa-user',
-        ],
+
     ],
 
     /*

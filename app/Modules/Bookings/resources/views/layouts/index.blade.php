@@ -60,6 +60,7 @@
                     <th>Số lượng</th>
                     <th>Thành tiền</th>
                     <th>Ngày tạo</th>
+                    <th>Ngày cập nhập</th>
                     <th>Trạng thái</th>
                     <th>Hành động</th>
                 </tr>
@@ -70,10 +71,42 @@
                         <td>{{ $bookings->firstItem() + $loop->index }}</td>
                         <td>{{ $booking->user->name ?? 'Không có user' }}</td>
                         <td>{{ $booking->user->email ?? 'Không có email' }}</td>
-                        <td>{{ $booking->product->name }}</td>
-                        <td>{{ $booking->quantity ?? 1 }}</td> <!-- Thêm cột số lượng -->
-                        <td>{{ number_format($booking->total_price ?? 0, 0, ',', '.') }} VNĐ</td> <!-- Hiển thị tổng tiền -->
+            
+                        <!-- Danh sách sản phẩm -->
+                        <td>
+                            <ul class="mb-0 ps-3">
+                                @foreach($booking->products as $product)
+                                    <li>{{ $product->name }}</li>
+                                @endforeach
+                            </ul>
+                        </td>
+            
+                        <!-- Danh sách số lượng tương ứng -->
+                        <td>
+                            <ul class="mb-0 ps-3">
+                                @foreach($booking->products as $product)
+                                    <li>{{ $product->pivot->quantity }}</li>
+                                @endforeach
+                            </ul>
+                        </td>
+            
+                        <!-- Tổng thành tiền -->
+                        <td>
+                            {{ number_format($booking->products->sum(function ($product) {
+                                return $product->price * $product->pivot->quantity;
+                            }), 0, ',', '.') }} VNĐ
+                        </td>
+            
                         <td>{{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}</td>
+                        <td>
+                            @php
+                                // Lấy ngày cập nhật mới nhất trong các product liên kết
+                                $latestUpdate = $booking->products->max(function ($product) {
+                                    return \Carbon\Carbon::parse($product->pivot->updated_at);
+                                });
+                            @endphp
+                            {{ $latestUpdate ? \Carbon\Carbon::parse($latestUpdate)->format('d/m/Y') : 'N/A' }}
+                        </td>                        
                         <td>
                             <span class="badge badge-{{ $booking->status == 'confirmed' ? 'success' : 'warning' }}">
                                 {{ ucfirst($booking->status) }}
@@ -104,7 +137,8 @@
                         </td>
                     </tr>
                 @endforeach
-            </tbody>            
+            </tbody>
+                     
         </table>
 
         <!-- Hiển thị phân trang -->

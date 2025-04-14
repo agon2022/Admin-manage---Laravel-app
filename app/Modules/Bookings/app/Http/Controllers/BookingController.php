@@ -13,9 +13,9 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $search     = $request->input('search');
+        $startDate  = $request->input('start_date');
+        $endDate    = $request->input('end_date');
 
         $bookings = Booking::when($search, function ($query, $search) {
             return $query->whereHas('user', function ($q) use ($search) {
@@ -26,76 +26,93 @@ class BookingController extends Controller
             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('booking_date', [$startDate, $endDate]);
             })
-            ->with('user')
-            ->orderBy('id', 'desc')
-            ->paginate(7);
+            ->with([
+                'user',
+                'products' => function ($q) {
+                    $q->withPivot('quantity', 'updated_at');
+                }
+            ])
+            ->orderByDesc('id')
+            ->paginate(5)
+            ->appends($request->query());
 
-        $users = User::all(); // Thêm dòng này để lấy danh sách user
+        $users = User::all();
 
-        return view('Bookings::index', compact('bookings', 'users')); // Truyền $users vào view
+        return view('Bookings::index', compact('bookings', 'users'));
     }
-
 
     public function create()
     {
-        $users = User::all();
+        $users    = User::all();
         $products = Product::all();
+
         return view('Bookings::create', compact('users', 'products'));
     }
 
     public function store(Request $request)
     {
+
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'booking_date' => 'nullable|date',
-            'status' => 'required|string'
+            'user_id'             => 'required|exists:users,id',
+            'booking_date'        => 'nullable|date',
+            'status'              => 'required|in:pending,confirmed,canceled',
+            'products'            => 'required|array|min:1',
+            'products.*.id'       => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        Booking::create([
-            'user_id' => $request->user_id,
-            'product_id' => $request->product_id,
-            'quantity' => $request->quantity,
-            'booking_date' => $request->booking_date, // Giữ nguyên không đổi
-            'status' => $request->status,
+        $booking = Booking::create([
+            'user_id'      => $request->user_id,
+            'booking_date' => $request->booking_date ?? now(),
+            'status'       => $request->status,
         ]);
 
-        return redirect()->route('bookings.index')->with('success', 'Đã đặt đơn hàng thành công.');
+        foreach ($request->products as $product) {
+            $booking->products()->attach($product['id'], [
+                'quantity' => $product['quantity'],
+                'updated_at' => now(),
+            ]);
+        }
+
+        return redirect()->route('bookings.index')->with('success', 'Đơn hàng đã được tạo thành công.');
     }
 
     public function edit($id)
     {
-        $booking = Booking::findOrFail($id);
-        $users = User::all();
+        $booking  = Booking::with(['products'])->findOrFail($id);
+        $users    = User::all();
         $products = Product::all();
+
         return view('Bookings::edit', compact('booking', 'users', 'products'));
     }
 
     public function update(Request $request, $id)
     {
-        // Validate dữ liệu đầu vào
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'booking_date' => 'nullable|date', // Chỉ nhận ngày hợp lệ
-            'status' => 'required|in:pending,confirmed,canceled',
+            'user_id'             => 'required|exists:users,id',
+            'booking_date'        => 'nullable|date',
+            'status'              => 'required|in:pending,confirmed,canceled',
+            'products'            => 'required|array',
+            'products.*.id'       => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Tìm booking cần cập nhật
         $booking = Booking::findOrFail($id);
 
-        // Cập nhật giá trị booking
-        $booking->user_id = $request->user_id;
-        $booking->product_id = $request->product_id;
-        $booking->quantity = $request->quantity;
-        $booking->status = $request->status;
+        $booking->update([
+            'user_id'      => $request->user_id,
+            'status'       => $request->status,
+        ]);
 
-        // Nếu không nhập ngày thì lấy ngày hiện tại
-        $booking->booking_date = $request->booking_date ? Carbon::parse($request->booking_date)->format('Y-m-d') : Carbon::now()->toDateString();
+        $syncData = [];
+        foreach ($request->products as $product) {
+            $syncData[$product['id']] = [
+                'quantity' => $product['quantity'],
+                'updated_at' => now(),
+            ];
+        }
 
-        $booking->save();
+        $booking->products()->sync($syncData);
 
         return redirect()->route('bookings.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }

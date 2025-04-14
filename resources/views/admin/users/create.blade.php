@@ -1,4 +1,10 @@
 @extends('admin.layouts.master')
+@push('styles')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 Bootstrap 5 Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+@endpush
 
 @section('admin-content')
 <div class="card">
@@ -11,9 +17,9 @@
         {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-@endif
+    @endif
 
-@if($errors->any())
+    @if($errors->any())
     <div class="alert alert-danger">
         <ul class="mb-0">
             @foreach ($errors->all() as $error)
@@ -21,7 +27,7 @@
             @endforeach
         </ul>
     </div>
-@endif
+    @endif
 
     <div class="card-body">
         <form action="{{ route('users.store') }}" method="POST">
@@ -42,37 +48,53 @@
                 <label>Nhập lại mật khẩu</label>
                 <input type="password" name="password_confirmation" class="form-control">
                 @error('password_confirmation')
-            <span class="text-danger">{{ $message }}</span>
-        @enderror
+                <span class="text-danger">{{ $message }}</span>
+                @enderror
             </div>
             <div class="form-group">
-    <label>Chọn Role</label>
-    <select name="roles[]" class="form-control">
-        @foreach ($roles as $role)
-            <option value="{{ $role->name }}">{{ $role->name }}</option>
-        @endforeach
-    </select>
-</div>
-
-            <!-- Chọn Permission (Checkbox) -->
-            <div class="form-group">
-                <label>Chọn Quyền (Permissions)</label>
-                <div class="row">
-                    @foreach ($permissions as $permission)
-                        <div class="col-md-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="perm_{{ $permission->id }}">
-                                <label class="form-check-label" for="perm_{{ $permission->id }}">
-                                    {{ $permission->name }}
-                                </label>
-                            </div>
-                        </div>
+                <label for="role">Chọn Role</label>
+                <select name="role" id="role"
+                    class="form-control select2-role"
+                    style="width: 100%;">
+                    <option value="">-- Chọn role --</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->name }}">{{ $role->name }}</option>
                     @endforeach
-                </div>
+                </select>
             </div>
-
+            
+                    
             <button type="submit" class="btn btn-success">Thêm User</button>
         </form>
     </div>
 </div>
+
 @endsection
+@push('scripts')
+    <!-- jQuery (nếu chưa có) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(function () {
+            $('.select2-role').select2({
+                placeholder: "Tìm kiếm và chọn role...",
+                theme: 'bootstrap-5',
+                allowClear: true,
+                width: '100%',
+                minimumResultsForSearch: Infinity, // Đảm bảo thanh tìm kiếm luôn hiển thị
+                language: {
+                    noResults: function() {
+                        return "Không tìm thấy kết quả";
+                    },
+                    searching: function() {
+                        return "Đang tìm kiếm...";
+                    }
+                }
+            });
+        });
+    </script>
+@endpush
+

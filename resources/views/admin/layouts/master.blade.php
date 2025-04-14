@@ -35,12 +35,25 @@
 }
 
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<!-- layouts/master.blade.php -->
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @yield('scripts')
+</head>
+
 <!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Yield scripts từ view -->
+@yield('scripts')
 
 <!-- CKEditor -->
 <script src="https://cdn.ckeditor.com/ckeditor5/38.1.0/classic/ckeditor.js"></script>
@@ -76,6 +89,44 @@
         height: 100px;
         object-fit: cover;
     }
+        /* Đảm bảo vùng editable của CKEditor luôn giữ chiều cao */
+        .ck-editor__editable_inline {
+        min-height: 400px !important;
+        max-height: 400px !important;
+        height: 400px !important;
+        overflow-y: auto !important;
+    }
+    <!-- CSS khắc phục sidebar -->
+    .main-sidebar {
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+}
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    min-height: 100vh;
+}
+.image-wrapper {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    display: inline-block;
+}
+
+.image-wrapper .delete-image {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 0 6px;
+    font-size: 14px;
+    line-height: 1;
+    z-index: 10;
+}
 </style>
 <!-- Thêm script để tự động tắt thông báo sau 3 giây -->
 <script>
@@ -89,3 +140,5 @@
         }, 3000); // 3000ms = 3 giây
     });
 </script>
+
+

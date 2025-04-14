@@ -36,8 +36,10 @@
                 </div>
                 <div class="form-group">
                     <label for="content">Nội dung danh mục</label>
-                    <textarea class="form-control" id="content" name="content" rows="4">{{ old('content', $category->content ?? '') }}</textarea>
-                </div>                
+                    <textarea class="form-control" id="content" name="content" rows="10" style="height: 600px;">
+                        {{ old('content', $category->content ?? '') }}
+                    </textarea>
+                </div>                                     
                 <button type="submit" class="btn btn-success mt-3">Lưu</button>
                 <a href="{{ route('category.index') }}" class="btn btn-secondary mt-3">Quay lại</a>
             </form>
@@ -48,10 +50,43 @@
 
 <script>
     ClassicEditor
-        .create(document.querySelector('#content'))
+        .create(document.querySelector('#content'), {
+            height: '400px'
+        })
+        .then(editor => {
+            editor.ui.view.editable.element.style.height = '400px';
+        })
         .catch(error => {
             console.error(error);
         });
 </script>
+
+
+<style>
+    /* Đảm bảo vùng editable của CKEditor luôn giữ chiều cao */
+    .ck-editor__editable_inline {
+        min-height: 400px !important;
+        max-height: 400px !important;
+        height: 400px !important;
+        overflow-y: auto !important;
+    }
+    <!-- CSS khắc phục sidebar -->
+    .main-sidebar {
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+}
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    min-height: 100vh;
+}
+</style>
+
+
 @endsection
 

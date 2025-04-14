@@ -11,26 +11,33 @@ class Booking extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'product_id', 'quantity', 'status', 'booking_date'];
+    protected $fillable = ['user_id', 'status', 'booking_date'];
 
     protected $casts = [
         'booking_date' => 'date',
     ];
 
-    // Liên kết với User
+    // Quan hệ với User
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Liên kết với Product
-    public function product()
+    // Quan hệ nhiều sản phẩm (many-to-many)
+    // App\Modules\Bookings\app\Models\Booking.php
+    public function products()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsToMany(\App\Modules\Products\app\Models\Product::class)
+            ->withPivot('quantity', 'updated_at')
+            ->withTimestamps();
     }
 
+
+    // Tổng giá
     public function getTotalPriceAttribute()
     {
-        return $this->product ? $this->product->price * $this->quantity : 0;
+        return $this->products->sum(function ($product) {
+            return $product->price * $product->pivot->quantity;
+        });
     }
 }

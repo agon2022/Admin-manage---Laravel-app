@@ -22,4 +22,10 @@ class Product extends Model
     {
         return $this->hasMany(ProductGallery::class, 'product_id'); // 🛠 Kiểm tra đúng tên model
     }
+    public function bookings()
+    {
+        return $this->belongsToMany(\App\Modules\Bookings\app\Models\Booking::class, 'booking_product')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
 }

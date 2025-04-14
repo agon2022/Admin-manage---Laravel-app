@@ -16,7 +16,8 @@ class CategoryController extends Controller
             return $query->where('name', 'like', "%{$search}%");
         })
             ->orderBy('id', 'desc')
-            ->paginate(5);
+            ->paginate(5)
+            ->appends(request()->query());
 
         return view('Category::index', compact('categories')); // ✅ Sửa đường dẫn View
     }

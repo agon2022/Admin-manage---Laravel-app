@@ -41,6 +41,10 @@
                 <label for="password">Mật khẩu (để trống nếu không đổi):</label>
                 <input type="password" name="password" class="form-control">
             </div>
+            <div class="form-group">
+                <label for="password_confirmation">Xác nhận mật khẩu:</label>
+                <input type="password" name="password_confirmation" class="form-control">
+            </div>            
 
             <!-- Chọn Role -->
             <div class="form-group">
@@ -53,24 +57,6 @@
                     @endforeach
                 </select>
             </div>            
-
-            <!-- Chọn Permission (Checkbox) -->
-            <div class="form-group">
-                <label>Chọn Quyền (Permissions)</label>
-                <div class="row">
-                    @foreach ($permissions as $permission)
-                        <div class="col-md-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="perm_{{ $permission->id }}" @if($user->hasPermissionTo($permission->name)) checked @endif>
-                                <label class="form-check-label" for="perm_{{ $permission->id }}">
-                                    {{ $permission->name }}
-                                </label>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
             <button type="submit" class="btn btn-success">Cập nhật</button>
         </form>
     </div>

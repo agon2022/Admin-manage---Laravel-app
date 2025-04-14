@@ -19,4 +19,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(Booking::class);
     }
+    public function adminlte_image()
+    {
+        return $this->avatar ? asset($this->avatar) : asset('images/default-avatar.png');
+    }
+
+    public function adminlte_desc()
+    {
+        return $this->email; // hoặc return 'Administrator';
+    }
+
+    public function adminlte_profile_url()
+    {
+        return 'admin/profile'; // hoặc route name như 'user.profile'
+    }
 }

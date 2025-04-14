@@ -79,7 +79,7 @@
                         </td>                                           
                         <td>{{ $product->category->name }}</td>
                         <td>{!! Str::limit($product->description, 50) !!}</td> <!-- Hiển thị mô tả với giới hạn 50 ký tự -->
-                        <td>{{ number_format($product->price, 0, ',', '.') }} đ</td>
+                        <td>{{ number_format($product->price, 0, ',', '.') }} VNĐ</td>
                         <td class="text-center">
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">

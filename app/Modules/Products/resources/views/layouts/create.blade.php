@@ -40,9 +40,9 @@
 
                 <div class="form-group">
                     <label for="price">Giá:</label>
-                    <input type="number" name="price" class="form-control" required 
-                           value="{{ $product->price ?? '' }}">
-                </div>
+                    <input type="text" id="price" name="price" class="form-control" required 
+                           value="{{ isset($product) ? number_format($product->price, 0, '', '.') : '' }}">
+                </div>                
 
                 <div class="form-group">
                     <label for="category_id">Danh Mục:</label>
@@ -73,7 +73,7 @@
                 @endif
 
                 <div class="form-group">
-                    <label for="images">Chọn Hình Ảnh Mới:</label>
+                    <label for="images">Chọn Hình Ảnh:</label>
                     <input type="file" name="images[]" class="form-control" multiple onchange="previewImages(event)">
                 </div>
 
@@ -88,33 +88,110 @@
                 </div>
 
                 <button type="submit" class="btn btn-success mt-3">Lưu</button>
+                <a href="{{ route('products.index') }}" class="btn btn-secondary mt-3">Quay lại</a>
             </form>
         </div>
     </div>
 </div>
 
-<!-- CKEditor -->
-<script src="https://cdn.ckeditor.com/ckeditor5/38.1.0/classic/ckeditor.js"></script>
 <script>
     ClassicEditor.create(document.querySelector('#description'))
         .catch(error => console.error(error));
+</script>
+<script>
+    const priceInput = document.getElementById('price');
+
+    function formatPriceVND(value) {
+        value = value.replace(/\D/g, ''); // Loại bỏ ký tự không phải số
+        return value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    priceInput.addEventListener('input', function (e) {
+        const cursorPosition = priceInput.selectionStart;
+        const rawValue = priceInput.value;
+        const formatted = formatPriceVND(rawValue);
+        priceInput.value = formatted;
+
+        // Giữ lại vị trí con trỏ
+        const newCursorPosition = cursorPosition + (formatted.length - rawValue.length);
+        priceInput.setSelectionRange(newCursorPosition, newCursorPosition);
+    });
+
+    // Trước khi submit, loại bỏ dấu chấm để gửi về server dạng số
+    document.querySelector('form').addEventListener('submit', function () {
+        priceInput.value = priceInput.value.replace(/\./g, '');
+    });
+</script>
+<script>
+    ClassicEditor
+        .create(document.querySelector('#content'), {
+            height: '400px'
+        })
+        .then(editor => {
+            editor.ui.view.editable.element.style.height = '400px';
+        })
+        .catch(error => {
+            console.error(error);
+        });
+</script>
+
+<script>
+    let selectedFiles = [];
 
     function previewImages(event) {
-        const files = event.target.files;
-        const previewContainer = document.getElementById('image-preview');
-        previewContainer.innerHTML = ''; // Xóa các ảnh cũ
+        const files = Array.from(event.target.files);
+        selectedFiles = files;
 
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.width = '100px';
-                img.style.margin = '5px';
-                previewContainer.appendChild(img);
+        renderImagePreview();
+    }
+
+    function renderImagePreview() {
+    const previewContainer = document.getElementById('image-preview');
+    previewContainer.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'image-wrapper me-2'; // sử dụng class giống edit
+            imgWrapper.style.display = 'inline-block';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-thumbnail';
+            img.style.width = '100px';
+            img.style.height = '100px';
+            img.style.objectFit = 'cover';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn btn-sm btn-danger delete-image'; // giống edit
+            closeBtn.onclick = () => {
+                selectedFiles.splice(index, 1);
+                renderImagePreview();
             };
-            reader.readAsDataURL(file);
-        });
+
+            imgWrapper.appendChild(img);
+            imgWrapper.appendChild(closeBtn);
+            previewContainer.appendChild(imgWrapper);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    updateFileInput();
+}
+
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.querySelector('input[name="images[]"]').files = dataTransfer.files;
     }
 </script>
+
+<style>
+
+
+</style>
 @endsection

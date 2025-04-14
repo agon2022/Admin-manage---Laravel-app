@@ -6,6 +6,7 @@ use App\Modules\Category\app\Models\Category;
 use App\Modules\ProductGallery\app\Models\ProductGallery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Modules\Products\app\Models\Product;
 
@@ -19,7 +20,8 @@ class ProductController extends Controller
             return $query->where('name', 'like', "%{$search}%");
         })->with('category')
             ->orderBy('id', 'desc')
-            ->paginate(5);
+            ->paginate(5)
+            ->appends(request()->query());
 
         return view('products::index', compact('products'));
     }
@@ -32,6 +34,9 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'price' => str_replace('.', '', $request->price)
+        ]);
         $request->validate(
             [
                 'name' => 'required|string|max:255|unique:products,name',
@@ -47,25 +52,33 @@ class ProductController extends Controller
             ]
         );
 
-        // 🟢 Lưu sản phẩm trước khi lưu ảnh
         $product = Product::create([
             'name' => $request->name,
             'price' => $request->price,
             'category_id' => $request->category_id,
-            'description' => strip_tags($request->description), // Loại bỏ HTML
+            'description' => strip_tags($request->description),
         ]);
 
-        // 🟢 Kiểm tra nếu có hình ảnh thì lưu vào bảng `products_gallery`
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('products', 'public');
+                $originalName = $image->getClientOriginalName();
+
+                // Kiểm tra ảnh trùng tên đã tồn tại trong gallery của sản phẩm này
+                $existing = ProductGallery::where('image_path', 'like', "%{$originalName}")->where('product_id', $product->id)->first();
+                if ($existing) {
+                    continue; // Bỏ qua ảnh trùng
+                }
+
+                $filename = Str::random(6) . '_' . $originalName;
+                $path = $image->storeAs('products', $filename, 'public');
 
                 ProductGallery::create([
-                    'product_id' => $product->id, // 🟢 Chắc chắn có ID sản phẩm
+                    'product_id' => $product->id,
                     'image_path' => $path
                 ]);
             }
         }
+
 
         return redirect()->route('products.index')->with('success', 'Thêm sản phẩm thành công!');
     }
@@ -82,9 +95,13 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $request->merge([
+            'price' => str_replace('.', '', $request->price)
+        ]);
+
         $request->validate(
             [
-                'name' => 'required|string|max:255|unique:products,name',
+                'name' => 'required|string|max:255|unique:products,name,' . $product->id,
                 'price' => 'required|numeric|min:0',
                 'category_id' => 'required|exists:categories,id',
                 'description' => 'nullable|string',
@@ -96,33 +113,40 @@ class ProductController extends Controller
                 'images.*.mimes' => 'Hình ảnh phải có định dạng jpeg, png, jpg, gif hoặc webp.',
             ]
         );
-        // Loại bỏ các thẻ HTML trong mô tả
+
         $description = strip_tags($request->input('description'));
 
-        // Cập nhật sản phẩm với mô tả không có thẻ HTML
         $product->update([
             'name' => $request->input('name'),
             'price' => $request->input('price'),
             'category_id' => $request->input('category_id'),
-            'description' => $description, // Cập nhật mô tả đã được loại bỏ thẻ HTML
+            'description' => $description,
         ]);
 
-        // Xử lý hình ảnh
-        if ($request->hasFile('images')) {
-            // Xóa hình ảnh cũ nếu có
-            if ($product->gallery && $product->gallery->count() > 0) {
-                foreach ($product->gallery as $image) {
+        if ($request->filled('deleted_images')) {
+            $deletedIds = explode(',', $request->input('deleted_images'));
+            foreach ($deletedIds as $id) {
+                $image = ProductGallery::find($id);
+                if ($image && $image->product_id == $product->id) {
                     Storage::delete('public/' . $image->image_path);
                     $image->delete();
                 }
             }
+        }
 
-            // Lưu hình ảnh mới
+        if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('products', 'public');
-                ProductGallery::create([
-                    'product_id' => $product->id,
-                    'image_path' => $path
+                $originalName = $image->getClientOriginalName();
+                $filename = Str::random(6) . '_' . $originalName;
+
+                $existing = $product->gallery()->where('image_path', 'like', '%' . $originalName)->first();
+                if ($existing) {
+                    continue;
+                }
+
+                $path = $image->storeAs('products', $filename, 'public');
+                $product->gallery()->create([
+                    'image_path' => $path,
                 ]);
             }
         }
@@ -141,5 +165,21 @@ class ProductController extends Controller
         $product = Product::with('category', 'gallery')->findOrFail($id); // Lấy sản phẩm theo ID
 
         return view('products::show', compact('product')); // Trả về view với thông tin sản phẩm
+    }
+    public function deleteImage($id)
+    {
+        $image = ProductGallery::find($id);
+
+        if (!$image) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy ảnh.'], 404);
+        }
+
+        // Xóa file ảnh vật lý
+        Storage::disk('public')->delete($image->image_path);
+
+        // Xóa bản ghi trong database
+        $image->delete();
+
+        return response()->json(['success' => true]);
     }
 }
